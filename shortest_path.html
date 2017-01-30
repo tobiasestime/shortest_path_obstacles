@@ -5,6 +5,7 @@
 </head>
 <style type="text/css">
 body {
+	margin: 20px 10px;
 	font-family: 'arial';
 	font-size: 1.1em;
 }
@@ -169,6 +170,7 @@ footer {
 							}
 						}
 						document.getElementById("path_length").innerHTML = "\u00A0";
+						toggleButton(false);
 					}
 				}
 			}
@@ -204,6 +206,8 @@ footer {
 				"x": board.plot(x),			/* compute graphical coordinates based on index */
 				"y": board.plot(y)
 			}).on("click", function() {
+				/* remove any existing paths */
+				board.clear(true);
 				/* default to open cell status */
 				var setStatus = cellStatus[1],
 					startCell = board.getCellByStatus(cellStatus[2]),
@@ -378,24 +382,6 @@ footer {
 			}
 		}
 
-		/* toggle button colors for case - done without jQuery for size */
-		function toggleButton(button) {
-			var otherButtons = document.getElementsByClassName("case"), otherId, other;
-			for (other in otherButtons) {
-				otherId = otherButtons[other].id;
-				if (otherId) {
-					if (otherId !== button.id) {
-						otherButtons[other].style.backgroundColor = "#fff";
-						otherButtons[other].style.color = "#7e3f00";
-					}
-				}
-			}
-			if (button) {
-				button.style.backgroundColor = "#7e3f00";
-				button.style.color = "#fff";
-			}
-		}
-
 		/* event handler for button click to find shortest path */
 		function runCase() {
 			/* remove degrees from previous pathfinding */
@@ -419,10 +405,27 @@ footer {
 			return Math.floor((Math.random() * maxExclusive) + shift);
 		}
 
+		/* toggle button colors for case - done without jQuery or other libraries for size */
+		function toggleButton(button) {
+			var otherButtons = document.getElementsByClassName("case"), otherId, other;
+			for (other in otherButtons) {
+				otherId = otherButtons[other].id;
+				if (otherId) {
+					if (otherId !== button.id) {
+						otherButtons[other].style.backgroundColor = "#fff";
+						otherButtons[other].style.color = "#7e3f00";
+					}
+				}
+			}
+			if (button) {
+				button.style.backgroundColor = "#7e3f00";
+				button.style.color = "#fff";
+			}
+		}
+
 		/* controls - clear board, random setup, rook's case, queen's case */
 		document.getElementById("clear").onclick = function() {
 			board.clear(false);
-			toggleButton(false);
 		}
 
 		document.getElementById("random").onclick = function() {
@@ -447,7 +450,6 @@ footer {
 			/* set start and end cells */
 			board.cells[randStartId].changeStatus(cellStatus[2]);
 			board.cells[randEndId].changeStatus(cellStatus[3]);
-			toggleButton(false);
 		}
 
 		document.getElementById("rook").onclick = runCase;
