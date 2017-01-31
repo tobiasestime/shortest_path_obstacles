@@ -155,7 +155,7 @@ footer {
 						/* return values for sizing board and placing cells graphically based on index within board */
 						return factor * this.cellSize + ((factor + 1) * this.spacing);
 					},
-					clear: function(openOnly) {
+					clear: function(openOnly, callBack) {
 						for (var cell in this.cells) {
 							if (openOnly) {
 								/* reset open cell and path cell only; see Cell for details */
@@ -169,23 +169,22 @@ footer {
 								this.cells[cell].changeStatus(cellStatus[1]);
 							}
 						}
-						document.getElementById("path_length").innerHTML = "\u00A0";
-						toggleButton(false);
+						if (callBack) {
+							/* clearing changes to DOM elments - implemented as callback to abscract away from object */
+							callBack();
+						}
 					}
 				}
 			}
 			/* single method to access for creating and returning the board instance from init */
 			return {
-				get: function(dimension, cellSize, spacing) {
+				get: function(setSvg, dimension, cellSize, spacing) {
 					if (!boardInstance) {
 						/* if the board has not been instantiated, instantiate it */
 						boardInstance = init(dimension, cellSize, spacing);
 						boardInstance.size = boardInstance.plot(boardInstance.dimension);
-						/* set graphical representation of board */
-						boardInstance.svg = d3.select("svg").attr({
-							"height": boardInstance.size,
-							"width": boardInstance.size
-						});
+						/* set graphical representation of board via callback function, which must return an svg element */
+						boardInstance.svg = setSvg(boardInstance.size);
 					}
 					return boardInstance;
 				}
@@ -197,6 +196,9 @@ footer {
 
 		/* Cell - added to board and mutated based on user input */
 		function Cell(board, x, y) {
+			/* verify argument types */
+			if (typeof(board.svg) !== "object" || typeof(x) !== "number" || typeof(y) !== "number")
+				throw "Board svg object must be defined and x and y must be numbers";
 			/* add rect element to svg for board, specify attributes, and handle click events */
 			var rect = board.svg.append("rect").attr({
 				"id": "x" + x + "y" + y,	/* id is a function of cell index on board */
@@ -207,7 +209,7 @@ footer {
 				"y": board.plot(y)
 			}).on("click", function() {
 				/* remove any existing paths */
-				board.clear(true);
+				board.clear(true, clearDomElements);
 				/* default to open cell status */
 				var setStatus = cellStatus[1],
 					startCell = board.getCellByStatus(cellStatus[2]),
@@ -349,8 +351,26 @@ footer {
 			findShortestPath(board, contiguity, ++degree, neighborMatrix);
 		}
 
+		/* event handler for button click to find shortest path */
+		function runCase() {
+			/* remove degrees from previous pathfinding */
+			board.clear(true, clearDomElements);
+			/* get contiguity based on button clicked */
+			var contiguity = this.id === "queen" ? true : false;
+			/* if start and end cells are defined start pathfinding */
+			var startingCell = board.getCellByStatus(cellStatus[2]);
+			if (startingCell && board.getCellByStatus(cellStatus[3])) {
+				/* get neighbors for starting cell as element 0 of multidimensional array corresponding to degrees from starting cell */
+				var startingNeighbors = [startingCell.getNeighbors(board, contiguity)];
+				findShortestPath(board, contiguity, 1, startingNeighbors);
+			} else {
+				return;
+			}
+			toggleButton(this);
+		}
+
 		/*
-		A simpler function for finding the path. This approach performs numerous unnecessary calculations.
+		A simpler, abandoned function for finding cell degrees. This approach performs numerous unnecessary calculations.
 		Board.prototype.pathLength = function(contiguity) {
 			var startCell = this.getCellByStatus(cellState[2]);
 			var endCell = this.getCellByStatus(cellState[3]);
@@ -371,41 +391,29 @@ footer {
 		}
 		*/
 
-		/* instantiate board with default dimensions */
-		var board = Board.get();
-
-		/* add cells iteratively, placing cells as function of x and y indicies on board */
-		var x, y;
-		for (x = 0; x < board.dimension; x++) {
-			for (y = 0; y < board.dimension; y++) {
-				board.addCell(Cell(board, x, y));
+		/* Board will throw exception if argument for setting svg is not function; Cell will throw exception if any argument is not valid */
+		try {
+			/* instantiate board with default dimensions, passing in callback to define svg */
+			var board = Board.get(function(size) {
+				return d3.select("svg").attr({
+					"height": size,
+					"width": size
+				});
+			});
+			/* add cells iteratively, placing cells as function of x and y indicies on board */
+			var x, y;
+			for (x = 0; x < board.dimension; x++) {
+				for (y = 0; y < board.dimension; y++) {
+					board.addCell(Cell(board, x, y));
+				}
 			}
 		}
-
-		/* event handler for button click to find shortest path */
-		function runCase() {
-			/* remove degrees from previous pathfinding */
-			board.clear(true);
-			/* get contiguity based on button clicked */
-			var contiguity = this.id === "queen" ? true : false;
-			/* if start and end cells are defined start pathfinding */
-			var startingCell = board.getCellByStatus(cellStatus[2]);
-			if (startingCell && board.getCellByStatus(cellStatus[3])) {
-				/* get neighbors for starting cell as element 0 of multidimensional array corresponding to degrees from starting cell */
-				var startingNeighbors = [startingCell.getNeighbors(board, contiguity)];
-				findShortestPath(board, contiguity, 1, startingNeighbors);
-			} else {
-				return;
-			}
-			toggleButton(this);
+		catch(ignore) {
+			/* ignore error message; let user know something went wrong */
+			document.getElementById("path_length").innerHTML = "Sorry, something went wrong while loading this widget.";
 		}
 
-		/* random integers for random function */
-		function getRandInt(shift, maxExclusive) {
-			return Math.floor((Math.random() * maxExclusive) + shift);
-		}
-
-		/* toggle button colors for case - done without jQuery or other libraries for size */
+		/* toggle button colors for case - done without adding jQuery or other libraries for size */
 		function toggleButton(button) {
 			var otherButtons = document.getElementsByClassName("case"), otherId, other;
 			for (other in otherButtons) {
@@ -423,13 +431,24 @@ footer {
 			}
 		}
 
+		/* run after clearing the svg elements on the board */
+		function clearDomElements() {
+			document.getElementById("path_length").innerHTML = "\u00A0";
+			toggleButton(false);
+		}
+
 		/* controls - clear board, random setup, rook's case, queen's case */
 		document.getElementById("clear").onclick = function() {
-			board.clear(false);
+			board.clear(false, clearDomElements);
+		}
+
+		/* random integers for random function */
+		function getRandInt(shift, maxExclusive) {
+			return Math.floor((Math.random() * maxExclusive) + shift);
 		}
 
 		document.getElementById("random").onclick = function() {
-			board.clear(false);
+			board.clear(false, clearDomElements);
 			var cell, counter = 0, counterMax = getRandInt(1, board.dimension);
 			/* open or close cells a random number of cells randomly */
 			for (cell in board.cells) {
