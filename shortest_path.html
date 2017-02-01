@@ -130,6 +130,7 @@ footer {
 			document.getElementById("path_length").innerHTML = "Please connect to the Internet and reload this page to load the d3.js library required for graphics on this page. If you are already connected to the Internet, there may be a problem with this page. Contact tobiasestime@gmail.com."
 			return;
 		}
+		
 		/* Board - singleton containing board cells and other properties */
 		var Board = (function() {
 			var boardInstance;
@@ -245,6 +246,15 @@ footer {
 			/* return rect object as cell object */
 			return rect.node();
 		}
+		
+		/* change cell status */
+		function changeStatus(status) {
+			this.status = status;
+			/* set degree for start cell to 0; otherwise it is uncalculated */
+			this.degree = status === cellStatus[2] ? 0 : Infinity;
+			/* change the css class of the cell to indicate status */
+			d3.select(this).attr("class", status);
+		}
 
 		/* based on the board, return a cell's neighbors */
 		function getNeighbors(board, queensCase) {
@@ -278,15 +288,6 @@ footer {
 			return neighborIds.map(function(id) {
 				return board.cells[id];
 			});
-		}
-
-		/* change cell status */
-		function changeStatus(status) {
-			this.status = status;
-			/* set degree for start cell to 0; otherwise it is uncalculated */
-			this.degree = status === cellStatus[2] ? 0 : Infinity;
-			/* change the css class of the cell to indicate status */
-			d3.select(this).attr("class", status);
 		}
 
 		/* recursively finds path from start cell to end cell */
