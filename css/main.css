@@ -1,0 +1,90 @@
+body {
+	margin: 20px 10px;
+	font-family: 'arial';
+	font-size: 1.1em;
+}
+
+h1, h2, h3, p {
+	text-align: center;
+}
+
+h3 {
+	margin: 5px 0px;
+}
+
+svg {
+	margin: auto;
+	display: block;
+	shape-rendering: crispEdges;
+}
+
+#controls {
+	margin: 20px 0px;
+	text-align: center;
+}
+
+button {
+	font-size: 1em;
+}
+
+button:hover {
+	color: #fff;
+	background: #7e3f00;
+}
+
+.clickable {
+	border: 2px solid #7e3f00;
+	border-radius: 4px;
+	color: #7e3f00;
+	background: transparent;
+}
+
+.closed {
+	fill: #000;
+	stroke: #000;
+	color: #fff;	
+	background: #000;
+}
+
+.open {
+	fill: #fff;
+	stroke: #000;
+}
+
+.start {
+	fill: #5aff54;
+	stroke: #000;
+	background: #5aff54;
+}
+
+.end {
+	fill: #e71d1d;
+	stroke: #000;
+	color: #fff;
+	background: #e71d1d;
+}
+
+.path {
+	fill: #209bff;
+	stroke: #000;
+	background: #209bff;
+}
+
+hr {
+	border: 1px dashed #c3c3c3;
+}
+
+ol {
+	margin: 0px auto;
+	display: block;
+	line-height: 150%;
+}
+
+span {
+	padding: 0px 5px;
+}
+
+footer {
+	text-align: center;
+	font-size: 0.8em;
+}
