@@ -1,2 +1,2 @@
 # shortest_path_obstacles
-Implementation of shortest path on a grid with obstacles
+Algorithm for shortest path on a grid with obstacles
